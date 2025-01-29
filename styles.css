@@ -1,36 +1,74 @@
-@font-face {
-    font-family: JetsBrainItalicVariable;
-    src: url(fonts/JetBrainsMono-Italic-VariableFont_wght.ttf);
-}
-
-@font-face {
-    font-family: JetsBrainItalicVariable;
-    src: url(fonts/JetBrainsMono-VariableFont_wght.ttf);
-}
-
 canvas{
     cursor: crosshair;
     border: solid 5px #00ADB5;
-    border-radius: 1%;
+    border-radius: 0.5%;
+    transition: ease-in-out 200ms;
+}
+*{
+    font-family: "JetBrains Mono", serif;
 }
 
 body{
-    font-family: "JetsBrainItalicVariable";
-    margin-top:2rem;
+    font-family: "JetBrains Mono", serif;
+    margin-top:3rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     background-color: rgb(0, 0, 0);
     color: #EEEEEE;
+    overflow: hidden;
 }
 
-.counter, .missed{
-    margin-top: 2rem;
-    width: 14rem;
-    height: 6rem;
+.counter, .missed, .timer, .percentage, .finalScore{
     font-size: 4rem;
-    margin-left: 8rem;
+}
+
+.win_container{
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2rem;
+    position: absolute;
+    align-items: center;
+    margin-bottom: 6rem;
+}
+
+.reset, .start{
+    font-family: "JetBrains Mono", serif;
+    font-size: 3rem;
+    color:black;
+    border:#00ADB5;
+    width: 50%;
+    min-width:25%;
+    border-radius: 5%;
+    transition: ease-in-out 200ms;
+}
+
+.start{
+    position: absolute;
+    width: 10%;
+    min-width:min-content;
+    margin-bottom: 6rem;
+    border-radius: 2%;
+}
+
+.reset:hover, .start:hover{
+    cursor: crosshair;
+    color: #00ADB5;
+    transform:scale(1.2);
+}
+
+.finishedGame{
+    display: flex;
+}
+
+.win{
+    font-size: 4rem;
+}
+
+.timer{
+    font-size: 4rem;
 }
 
 .counter{
@@ -41,13 +79,31 @@ body{
     color: red;
 }
 
-
 .score_container{
     display: flex;
+    width:100%;
+    justify-content: space-evenly;
+    gap:36rem;
+    align-items: center;
+    text-align: center;
 }
 
+.timer{
+    z-index: 0;
+    position:absolute;
+}
 
 .hit{
       transition: all 300ms ease-in;
       border: solid 1px #00ADB5;
+}
+
+.endgame{
+    transition: ease-in-out 500ms;
+    background-color:#00ADB5;
+
+}
+
+.turnOffDisplay{
+    display: none;
 }
