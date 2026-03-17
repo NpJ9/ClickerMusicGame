@@ -107,3 +107,65 @@ body{
 .turnOffDisplay{
     display: none;
 }
+
+.picker{
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    position: absolute;
+    margin-bottom: 6rem;
+}
+
+.picker.show{
+    display: flex;
+}
+
+.picker_label{
+    font-size: 2rem;
+    margin: 0;
+    color: #EEEEEE;
+}
+
+.picker_btn{
+    font-family: "JetBrains Mono", serif;
+    font-size: 2rem;
+    color: black;
+    border: 2px solid #00ADB5;
+    width: 200px;
+    border-radius: 5%;
+    transition: ease-in-out 200ms;
+    cursor: crosshair;
+}
+
+.picker_btn:hover{
+    color: #00ADB5;
+    transform: scale(1.2);
+}
+
+.particle_toggle{
+    font-family: "JetBrains Mono", serif;
+    font-size: 1rem;
+    color: #EEEEEE;
+    background: transparent;
+    border: 2px solid #555;
+    border-radius: 4px;
+    padding: 0.4rem 0.8rem;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    cursor: crosshair;
+    transition: ease-in-out 200ms;
+}
+
+.particle_toggle:hover{
+    border-color: #00ADB5;
+    color: #00ADB5;
+    transform: scale(1.05);
+}
+
+.particle_toggle_active{
+    border-color: #00ADB5;
+    color: #00ADB5;
+    box-shadow: 0 0 8px rgba(0, 173, 181, 0.5);
+}
