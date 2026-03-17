@@ -142,30 +142,3 @@ body{
     color: #00ADB5;
     transform: scale(1.2);
 }
-
-.particle_toggle{
-    font-family: "JetBrains Mono", serif;
-    font-size: 1rem;
-    color: #EEEEEE;
-    background: transparent;
-    border: 2px solid #555;
-    border-radius: 4px;
-    padding: 0.4rem 0.8rem;
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    cursor: crosshair;
-    transition: ease-in-out 200ms;
-}
-
-.particle_toggle:hover{
-    border-color: #00ADB5;
-    color: #00ADB5;
-    transform: scale(1.05);
-}
-
-.particle_toggle_active{
-    border-color: #00ADB5;
-    color: #00ADB5;
-    box-shadow: 0 0 8px rgba(0, 173, 181, 0.5);
-}

@@ -6,7 +6,6 @@ const win = document.getElementById("win_container");
 const reset = document.getElementById("reset");
 const start = document.getElementById("start");
 const picker = document.getElementById("picker");
-const particleToggle = document.getElementById("particle_toggle");
 const percentage = document.getElementById("percentage");
 const musicArr = ["1.wav", "2.wav", "3.wav", "4.wav"];
 let timer = document.getElementById("timer");
@@ -82,7 +81,6 @@ let ballState = "idle";
 
 // --- Particles ---
 let particles = [];
-let imageParticlesEnabled = false;
 
 // --- Game loop ---
 let loopRunning = false;
@@ -183,20 +181,12 @@ function render() {
   for (const p of particles) {
     ctx.save();
     ctx.globalAlpha = Math.max(0, p.alpha);
-    const r = Math.max(0.1, p.size);
-    if (imageParticlesEnabled && p.image) {
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(p.image, p.x - r, p.y - r, r * 2, r * 2);
-    } else {
-      ctx.fillStyle = p.color;
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur = 12;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, Math.max(0.1, p.size), 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 }
@@ -232,7 +222,6 @@ function spawnParticles(x, y) {
       decay: Math.random() * 0.016 + 0.01,
       size: Math.random() * 10 + 3,
       color: `hsl(${hue}, 100%, ${58 + Math.floor(Math.random() * 18)}%)`,
-      image: currentBallImage,
     });
   }
 }
@@ -406,10 +395,4 @@ document.getElementById("pick_jack").addEventListener("click", () => {
 document.getElementById("pick_both").addEventListener("click", () => {
   activeBallImages = ballImages;
   beginGame();
-});
-
-particleToggle.addEventListener("click", () => {
-  imageParticlesEnabled = !imageParticlesEnabled;
-  particleToggle.textContent = imageParticlesEnabled ? "Photo Particles: ON" : "Photo Particles: OFF";
-  particleToggle.classList.toggle("particle_toggle_active", imageParticlesEnabled);
 });
