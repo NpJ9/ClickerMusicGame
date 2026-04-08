@@ -1,17 +1,24 @@
 // ============================================================
+// DEVICE DETECTION
+// ============================================================
+const isMobile =
+  window.matchMedia("(max-width: 600px)").matches ||
+  ("ontouchstart" in window && window.innerWidth <= 900);
+
+// ============================================================
 // LEVEL & TIME CONFIG
 // ============================================================
 const LEVELS = [
   {
     name: "Normal",
-    ballRadius: 52,
+    ballRadius: isMobile ? 36 : 52,
     expireMs: 4000,
     spawnSpeed: 0.15,
     multiplier: 2,
   },
   {
     name: "Hard",
-    ballRadius: 32,
+    ballRadius: isMobile ? 22 : 32,
     expireMs: 2000,
     spawnSpeed: 0.22,
     multiplier: 5,
@@ -52,6 +59,43 @@ const playBtn = document.getElementById("play_btn");
 const hudEl = document.getElementById("hud");
 
 // ============================================================
+// AUDIO
+// Pre-create all Audio elements so there's no construction cost on tap.
+// ============================================================
+const audioPool = musicArr.map((src) => {
+  const a = new Audio(src);
+  a.volume = 0.2;
+  return a;
+});
+
+const sfx = {
+  chloe: Object.assign(new Audio("chloe.wav"), { volume: 0.5 }),
+  jack: Object.assign(new Audio("jack.wav"), { volume: 0.5 }),
+  both: Object.assign(new Audio("jacknchloe.wav"), { volume: 0.5 }),
+  hellosir: Object.assign(new Audio("hellosir.wav"), { volume: 0.5 }),
+};
+
+function playSfx(key) {
+  const a = sfx[key];
+  if (!a) return;
+  a.currentTime = 0;
+  a.play().catch(() => {});
+}
+
+let lastNoteIndex = null;
+
+function playRandomNote() {
+  let index;
+  do {
+    index = Math.floor(Math.random() * musicArr.length);
+  } while (index === lastNoteIndex && musicArr.length > 1);
+  lastNoteIndex = index;
+  const audio = audioPool[index];
+  audio.currentTime = 0;
+  audio.play().catch(() => {});
+}
+
+// ============================================================
 // SETUP STATE
 // ============================================================
 let selectedLevelIndex = null;
@@ -68,9 +112,7 @@ let totalClicks = 0;
 let seconds = 0;
 let gameFinished = false;
 let gameStarted = false;
-let soundPlayed = false;
 let interval = null;
-let winSoundInterval = null;
 
 // ============================================================
 // BALL STATE
@@ -81,13 +123,15 @@ let lastBallImage = null;
 let ballScale = 0;
 let ballAlpha = 0;
 let ballState = "idle"; // 'spawning' | 'idle' | 'dying'
-let circle = null;
+let idleCircle = null; // cached Path2D for hit-testing; valid only when ballState === 'idle'
 let ballExpireTimeout = null;
 
 // ============================================================
 // PARTICLES
 // ============================================================
 let particles = [];
+const PARTICLE_COUNT = isMobile ? 25 : 60;
+const USE_PARTICLE_SHADOW = !isMobile;
 
 // ============================================================
 // GAME LOOP
@@ -113,14 +157,20 @@ function tick() {
 }
 
 // ============================================================
-// CANVAS RESIZE
+// CANVAS RESIZE (debounced)
 // ============================================================
-window.addEventListener("resize", resizeCanvas);
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(resizeCanvas, 100);
+});
 
 function resizeCanvas() {
   const hudHeight = hudEl.offsetHeight || 44;
   canvas.height = window.innerHeight - hudHeight - 4;
-  canvas.width = window.innerWidth * 0.9;
+  canvas.width = isMobile
+    ? window.innerWidth
+    : Math.round(window.innerWidth * 0.9);
   if (!gameStarted || gameFinished) return;
   render();
 }
@@ -138,11 +188,15 @@ function updateBall() {
       ballScale = 1;
       ballAlpha = 1;
       ballState = "idle";
-      if (currentLevel.expireMs !== null && !gameFinished) {
+      // Cache hit-test circle once at full idle size — reused every frame until ball dies
+      idleCircle = new Path2D();
+      idleCircle.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+      if (!gameFinished) {
         ballExpireTimeout = setTimeout(() => {
           if (ballState === "idle" && !gameFinished) {
             misses++;
             missedEl.textContent = misses;
+            idleCircle = null;
             ballState = "dying";
           }
         }, currentLevel.expireMs);
@@ -185,6 +239,7 @@ function render() {
     const glowPulse =
       ballState === "idle" ? 0.7 + 0.3 * Math.sin(Date.now() / 220) : ballAlpha;
 
+    // Glow ring
     ctx.save();
     ctx.shadowColor = `rgba(0,210,255,${ballAlpha * glowPulse})`;
     ctx.shadowBlur = 28;
@@ -195,21 +250,25 @@ function render() {
     ctx.stroke();
     ctx.restore();
 
+    // Clipped image — local path, not stored globally
     ctx.save();
     ctx.globalAlpha = ballAlpha;
-    circle = new Path2D();
-    circle.arc(ballX, ballY, r, 0, Math.PI * 2);
-    ctx.clip(circle);
+    const clipPath = new Path2D();
+    clipPath.arc(ballX, ballY, r, 0, Math.PI * 2);
+    ctx.clip(clipPath);
     ctx.drawImage(currentBallImage, ballX - r, ballY - r, r * 2, r * 2);
     ctx.restore();
   }
 
+  // Particles
   for (const p of particles) {
     ctx.save();
     ctx.globalAlpha = Math.max(0, p.alpha);
     ctx.fillStyle = p.color;
-    ctx.shadowColor = p.color;
-    ctx.shadowBlur = 12;
+    if (USE_PARTICLE_SHADOW) {
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 12;
+    }
     ctx.beginPath();
     ctx.arc(p.x, p.y, Math.max(0.1, p.size), 0, Math.PI * 2);
     ctx.fill();
@@ -223,6 +282,7 @@ function render() {
 function spawnNextBall() {
   clearTimeout(ballExpireTimeout);
   ballExpireTimeout = null;
+  idleCircle = null;
   ballX =
     Math.floor(Math.random() * (canvas.width - ballRadius * 2 - 20)) +
     ballRadius +
@@ -241,7 +301,7 @@ function spawnNextBall() {
 // PARTICLES SPAWN
 // ============================================================
 function spawnParticles(x, y) {
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = Math.random() * 12 + 2.5;
     const hue = Math.floor(Math.random() * 360);
@@ -287,14 +347,13 @@ const jackImageSrcs = [
 
 const ballImages = [];
 let imagesLoaded = 0;
-
 const allImageSrcs = [...chloeImageSrcs, ...jackImageSrcs];
+
 for (const src of allImageSrcs) {
   const img = new Image();
   img.src = src;
   img.onload = () => {
-    imagesLoaded++;
-    if (imagesLoaded === allImageSrcs.length) resizeCanvas();
+    if (++imagesLoaded === allImageSrcs.length) resizeCanvas();
   };
   img.onerror = () => console.error(`Image failed to load: ${src}`);
   ballImages.push(img);
@@ -325,9 +384,10 @@ function handleTap(x, y) {
     return;
   }
 
-  if (circle && ctx.isPointInPath(circle, x, y)) {
+  if (idleCircle && ctx.isPointInPath(idleCircle, x, y)) {
     clearTimeout(ballExpireTimeout);
     ballExpireTimeout = null;
+    idleCircle = null;
     points++;
     counterEl.textContent = points;
     spawnParticles(ballX, ballY);
@@ -356,37 +416,6 @@ canvas.addEventListener(
 );
 
 // ============================================================
-// AUDIO
-// ============================================================
-let lastNoteIndex = null;
-
-function playRandomNote() {
-  let index;
-  do {
-    index = Math.floor(Math.random() * musicArr.length);
-  } while (index === lastNoteIndex && musicArr.length > 1);
-  lastNoteIndex = index;
-  const audio = new Audio(musicArr[index]);
-  audio.currentTime = 0;
-  audio.volume = 0.2;
-  audio.play();
-}
-
-function playStartSound() {
-  const s = new Audio("startSound.wav");
-  s.volume = 0.3;
-  s.play();
-}
-
-function playWinSound() {
-  if (soundPlayed) return;
-  soundPlayed = true;
-  const s = new Audio("endround.wav");
-  s.volume = 0.4;
-  s.play();
-}
-
-// ============================================================
 // TIMER
 // ============================================================
 function countDown() {
@@ -399,7 +428,6 @@ function countDown() {
     clearTimeout(ballExpireTimeout);
     ballExpireTimeout = null;
     showEndScreen();
-    winSoundInterval = setInterval(playWinSound, 600);
     canvas.classList.add("endgame");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   } else {
@@ -419,8 +447,7 @@ function showEndScreen() {
   document.getElementById("final_misses").textContent = misses;
   document.getElementById("final_accuracy").textContent =
     accuracy.toFixed(1) + "%";
-  document.getElementById("win_level").textContent =
-    `Level: ${currentLevel.name}`;
+  document.getElementById("win_level").textContent = `Level: ${currentLevel.name}`;
   document.getElementById("win_score").textContent = `Score: ${score}`;
 
   const accEl = document.getElementById("final_accuracy");
@@ -455,19 +482,7 @@ document.querySelectorAll("[data-photo]").forEach((btn) => {
       .forEach((b) => b.classList.remove("selected"));
     btn.classList.add("selected");
     selectedPhoto = btn.dataset.photo;
-    if (selectedPhoto === "chloe") {
-      const s = new Audio("chloe.wav");
-      s.volume = 0.5;
-      s.play();
-    } else if (selectedPhoto === "jack") {
-      const s = new Audio("jack.wav");
-      s.volume = 0.5;
-      s.play();
-    } else {
-      const s = new Audio("jacknchloe.wav");
-      s.volume = 0.5;
-      s.play();
-    }
+    playSfx(selectedPhoto === "both" ? "both" : selectedPhoto);
     checkPlayReady();
   });
 });
@@ -506,7 +521,7 @@ function beginGame() {
   misses = 0;
   totalClicks = 0;
   lastBallImage = null;
-  soundPlayed = false;
+  idleCircle = null;
 
   counterEl.textContent = 0;
   missedEl.textContent = 0;
@@ -519,7 +534,6 @@ function beginGame() {
 
   hudEl.classList.remove("hidden");
   spawnNextBall();
-  playStartSound();
   startLoop();
 
   clearInterval(interval);
@@ -530,9 +544,7 @@ function beginGame() {
 // RESET
 // ============================================================
 resetBtn.addEventListener("click", () => {
-  const s = new Audio("hellosir.wav");
-  s.volume = 0.5;
-  s.play();
+  playSfx("hellosir");
   winContainer.classList.remove("finishedGame");
   startBtn.classList.remove("turnOffDisplay");
 
@@ -543,15 +555,13 @@ resetBtn.addEventListener("click", () => {
     .forEach((b) => b.classList.remove("selected"));
   playBtn.disabled = true;
 
-  clearInterval(winSoundInterval);
   clearInterval(interval);
   clearTimeout(ballExpireTimeout);
-
-  winSoundInterval = null;
   ballExpireTimeout = null;
+  idleCircle = null;
+
   gameFinished = true;
   gameStarted = false;
-  soundPlayed = false;
   interval = null;
   particles = [];
 

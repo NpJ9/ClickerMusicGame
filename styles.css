@@ -297,6 +297,16 @@ canvas.endgame {
 }
 
 @media (max-width: 600px) {
+  canvas {
+    border: none;
+    border-radius: 0;
+  }
+
+  .hud {
+    width: 100%;
+    padding: 0.15rem 0.75rem;
+  }
+
   .setup_title {
     font-size: 1.2rem;
   }
