@@ -1,144 +1,344 @@
-canvas{
-    cursor: crosshair;
-    border: solid 5px #00ADB5;
-    border-radius: 0.5%;
-    transition: ease-in-out 200ms;
-}
-*{
-    font-family: "JetBrains Mono", serif;
+* {
+  font-family: "JetBrains Mono", serif;
+  box-sizing: border-box;
 }
 
-body{
-    font-family: "JetBrains Mono", serif;
-    margin-top:3rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background-color: rgb(0, 0, 0);
-    color: #EEEEEE;
-    overflow: hidden;
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #000;
+  color: #eee;
+  height: 100vh;
+  height: 100dvh; /* fixes iOS Safari address bar bug */
+  overflow: hidden;
+  overscroll-behavior: none; /* prevents rubber-band scroll on iOS */
+  padding-bottom: env(safe-area-inset-bottom); /* home indicator clearance */
+  -webkit-tap-highlight-color: transparent; /* removes tap flash on iOS */
+  user-select: none;
 }
 
-.counter, .missed, .timer, .percentage, .finalScore{
-    font-size: 4rem;
+/* ── Canvas ── */
+canvas {
+  cursor: crosshair;
+  border: solid 3px #00adb5;
+  border-radius: 4px;
+  transition: background-color 500ms ease-in-out;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-.win_container{
-    display: none;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 2rem;
-    position: absolute;
-    align-items: center;
-    margin-bottom: 6rem;
+button {
+  touch-action: manipulation; /* prevents 300ms tap delay & double-tap zoom */
+  -webkit-tap-highlight-color: transparent;
 }
 
-.reset, .start{
-    font-family: "JetBrains Mono", serif;
-    font-size: 3rem;
-    color:black;
-    border:#00ADB5;
-    width: 50%;
-    min-width:25%;
-    border-radius: 5%;
-    transition: ease-in-out 200ms;
+canvas.endgame {
+  background-color: #00adb5;
 }
 
-.start{
-    position: absolute;
-    width: 10%;
-    min-width:min-content;
-    margin-bottom: 6rem;
-    border-radius: 2%;
+/* ── In-game HUD ── */
+.hud {
+  display: flex;
+  width: 90vw;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  margin-top: 0.15rem;
 }
 
-.reset:hover, .start:hover{
-    cursor: crosshair;
-    color: #00ADB5;
-    transform:scale(1.2);
+.hud.hidden {
+  visibility: hidden;
 }
 
-.finishedGame{
-    display: flex;
+.hud_item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  min-width: 80px;
 }
 
-.win{
-    font-size: 4rem;
+.hud_label {
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  opacity: 0.5;
 }
 
-.timer{
-    font-size: 4rem;
+.hud_value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
-.counter{
-    color: green;
+.hud_timer {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #eee;
+  line-height: 1;
 }
 
-.missed{
-    color: red;
+.counter {
+  color: #00ff88;
+}
+.missed {
+  color: #ff4455;
 }
 
-.score_container{
-    display: flex;
-    width:100%;
-    justify-content: space-evenly;
-    gap:36rem;
-    align-items: center;
-    text-align: center;
+/* ── Start button ── */
+.start {
+  font-family: "JetBrains Mono", serif;
+  font-size: 2rem;
+  color: #000;
+  background: #eee;
+  border: 2px solid #00adb5;
+  padding: 0.5rem 2rem;
+  border-radius: 6px;
+  cursor: crosshair;
+  transition: all 200ms ease-in-out;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
-.timer{
-    z-index: 0;
-    position:absolute;
+.start:hover {
+  color: #00adb5;
+  transform: translate(-50%, -50%) scale(1.15);
 }
 
-.hit{
-      transition: all 300ms ease-in;
-      border: solid 1px #00ADB5;
+.turnOffDisplay {
+  display: none !important;
 }
 
-.endgame{
-    transition: ease-in-out 500ms;
-    background-color:#00ADB5;
-
+/* ── Setup panel ── */
+.setup_panel {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.94);
+  border: 2px solid #00adb5;
+  border-radius: 10px;
+  padding: 2rem 2.5rem;
+  width: min(480px, 92vw);
 }
 
-.turnOffDisplay{
-    display: none;
+.setup_panel.show {
+  display: flex;
 }
 
-.picker{
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    position: absolute;
-    margin-bottom: 6rem;
+.setup_title {
+  font-size: 1.6rem;
+  margin: 0;
+  color: #00adb5;
+  letter-spacing: 4px;
+  text-transform: uppercase;
 }
 
-.picker.show{
-    display: flex;
+.setup_section {
+  width: 100%;
 }
 
-.picker_label{
+.setup_label {
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  opacity: 0.55;
+  margin: 0 0 0.4rem;
+  text-transform: uppercase;
+}
+
+.setup_row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.setup_btn {
+  font-family: "JetBrains Mono", serif;
+  font-size: 0.95rem;
+  color: #eee;
+  background: transparent;
+  border: 1.5px solid #333;
+  border-radius: 5px;
+  padding: 0.4rem 0.8rem;
+  cursor: crosshair;
+  transition: all 150ms ease-in-out;
+  flex: 1;
+}
+
+.setup_btn:hover {
+  border-color: #00adb5;
+  color: #00adb5;
+}
+
+.setup_btn.selected {
+  background: #00adb5;
+  border-color: #00adb5;
+  color: #000;
+  font-weight: 700;
+}
+
+.play_btn {
+  font-family: "JetBrains Mono", serif;
+  font-size: 1.4rem;
+  color: #000;
+  background: #00adb5;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 0;
+  cursor: crosshair;
+  transition: all 200ms ease-in-out;
+  margin-top: 0.3rem;
+  width: 100%;
+}
+
+.play_btn:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.play_btn:not(:disabled):hover {
+  transform: scale(1.05);
+  background: #00c9d4;
+}
+
+/* ── End / win screen ── */
+.win_container {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.96);
+  border: 2px solid #00adb5;
+  border-radius: 10px;
+  padding: 2rem 3rem;
+  width: min(380px, 92vw);
+}
+
+.win_container.finishedGame {
+  display: flex;
+}
+
+.win_title {
+  font-size: 2.2rem;
+  color: #00adb5;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.win_level {
+  font-size: 0.8rem;
+  letter-spacing: 3px;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+.win_stats {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.win_stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.win_stat_label {
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  opacity: 0.55;
+  text-transform: uppercase;
+}
+
+.win_stat_value {
+  font-size: 2.8rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #eee;
+}
+
+.win_score {
+  font-size: 1.3rem;
+  color: #ffcc00;
+  letter-spacing: 2px;
+}
+
+.reset {
+  font-family: "JetBrains Mono", serif;
+  font-size: 1.4rem;
+  color: #000;
+  background: #eee;
+  border: 2px solid #00adb5;
+  border-radius: 6px;
+  padding: 0.5rem 0;
+  cursor: crosshair;
+  transition: all 200ms ease-in-out;
+  width: 100%;
+}
+
+.reset:hover {
+  color: #00adb5;
+  transform: scale(1.06);
+}
+
+@media (max-width: 600px) {
+  .setup_title {
+    font-size: 1.2rem;
+  }
+  .setup_btn {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.4rem;
+  }
+  .play_btn {
+    font-size: 1.1rem;
+  }
+  .setup_panel {
+    padding: 1.4rem 1.2rem;
+    gap: 0.9rem;
+  }
+
+  .hud_value {
+    font-size: 1.4rem;
+  }
+  .hud_timer {
+    font-size: 1.8rem;
+  }
+  .hud_label {
+    font-size: 0.55rem;
+  }
+
+  .win_title {
+    font-size: 1.6rem;
+    letter-spacing: 3px;
+  }
+  .win_stat_value {
     font-size: 2rem;
-    margin: 0;
-    color: #EEEEEE;
-}
-
-.picker_btn{
-    font-family: "JetBrains Mono", serif;
-    font-size: 2rem;
-    color: black;
-    border: 2px solid #00ADB5;
-    width: 200px;
-    border-radius: 5%;
-    transition: ease-in-out 200ms;
-    cursor: crosshair;
-}
-
-.picker_btn:hover{
-    color: #00ADB5;
-    transform: scale(1.2);
+  }
+  .win_stats {
+    gap: 1.2rem;
+  }
+  .win_container {
+    padding: 1.5rem 1.2rem;
+  }
+  .win_score {
+    font-size: 1rem;
+  }
+  .reset {
+    font-size: 1.1rem;
+  }
 }

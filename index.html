@@ -1,34 +1,83 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href ="styles.css" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-    <title>Document</title>
-</head>
-<body>
-    <canvas id ="canvas" class ="endgame"></canvas>
-        <div class = "win_container" id = "win_container">
-            <div class = "win">Game over</div>
-                <div class = "percentage" id = "percentage">76%</div>
-                    <button class = "reset" id = "reset">Reset</button>
-        </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link href="styles.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+      rel="stylesheet"
+    />
+    <title>Tap Game</title>
+  </head>
+  <body>
+    <canvas id="canvas" class="endgame"></canvas>
 
-        <button class = "start" id = "start">Start</button>
-        <div class="picker" id="picker">
-            <p class="picker_label">Whose pictures?</p>
-            <button class="picker_btn" id="pick_chloe">Chloe</button>
-            <button class="picker_btn" id="pick_jack">Jack</button>
-            <button class="picker_btn" id="pick_both">Both</button>
+    <!-- In-game HUD -->
+    <div class="hud hidden" id="hud">
+      <div class="hud_item">
+        <span class="hud_value counter" id="counter">0</span>
+        <span class="hud_label">HITS</span>
+      </div>
+      <span class="hud_timer" id="timer">0</span>
+      <div class="hud_item">
+        <span class="hud_value missed" id="missed">0</span>
+        <span class="hud_label">MISSES</span>
+      </div>
+    </div>
+
+    <!-- Start button -->
+    <button class="start" id="start">Start</button>
+
+    <!-- Setup panel -->
+    <div class="setup_panel" id="setup_panel">
+      <p class="setup_title">Game Setup</p>
+
+      <div class="setup_section">
+        <p class="setup_label">Level</p>
+        <div class="setup_row">
+          <button class="setup_btn" data-level="0">Normal</button>
+          <button class="setup_btn" data-level="1">Hard</button>
         </div>
-            <div class = "score_container" id = "score">
-                <div class = "counter" id = "counter">0</div>
-                    <div class = "timer" id = "timer">5</div>
-                        <div class = "missed" id = "missed">0</div>
-            </div>
-</body>
-<script src ="script.js"></script>
+      </div>
+
+      <div class="setup_section">
+        <p class="setup_label">Photos</p>
+        <div class="setup_row">
+          <button class="setup_btn" data-photo="chloe">Chloe</button>
+          <button class="setup_btn" data-photo="jack">Jack</button>
+          <button class="setup_btn" data-photo="both">Both</button>
+        </div>
+      </div>
+
+      <button class="play_btn" id="play_btn" disabled>Play!</button>
+    </div>
+
+    <!-- End screen -->
+    <div class="win_container" id="win_container">
+      <div class="win_title">Game Over</div>
+      <div class="win_level" id="win_level">Easy</div>
+      <div class="win_stats">
+        <div class="win_stat">
+          <span class="win_stat_value counter" id="final_hits">0</span>
+          <span class="win_stat_label">HITS</span>
+        </div>
+        <div class="win_stat">
+          <span class="win_stat_value missed" id="final_misses">0</span>
+          <span class="win_stat_label">MISSES</span>
+        </div>
+        <div class="win_stat">
+          <span class="win_stat_value" id="final_accuracy">0%</span>
+          <span class="win_stat_label">ACCURACY</span>
+        </div>
+      </div>
+      <div class="win_score" id="win_score">Score: 0</div>
+      <button class="reset" id="reset">Play Again</button>
+    </div>
+  </body>
+  <script src="script.js"></script>
 </html>
